@@ -1,0 +1,82 @@
+# Tahsin Can Sarlak and Yiyue Yin
+# Tufts University Advanced Robotics(ME-180) 
+# Chariot that does not use any wheels to move
+# Due: 10/16/2019
+
+# Client Raspberry Pi Code
+
+# Imports the important libraries to make the IMU work and also imports bluetooth to send the values to the receiver Raspberry Pi
+import sys, getopt
+sys.path.append('.')
+import RTIMU
+import os.path
+import time
+import math
+import bluetooth
+import numpy
+
+# Makes sure the RTIMULib works and prints if it is connected
+SETTINGS_FILE = "RTIMULib"
+
+
+print("Using settings file " + SETTINGS_FILE + ".ini")
+if not os.path.exists(SETTINGS_FILE + ".ini"):
+  print("Settings file does not exist, will be created")
+
+s = RTIMU.Settings(SETTINGS_FILE)
+imu = RTIMU.RTIMU(s)
+
+print("IMU Name: " + imu.IMUName())
+
+if (not imu.IMUInit()):
+    print("IMU Init Failed")
+    sys.exit(1)
+else:
+    print("IMU Init Succeeded")
+
+# It enables the specific aspects of IMU readings
+
+imu.setSlerpPower(0.02)
+imu.setGyroEnable(True)
+imu.setAccelEnable(True)
+imu.setCompassEnable(True)
+
+# Shows the advised poll interval taking from online
+poll_interval = imu.IMUGetPollInterval()
+print("Recommended Poll Interval: %dmS\n" % poll_interval)
+
+# The bluetooth address of Server
+bd_addr = "B8:27:EB:50:80:B9"
+
+port = 1
+
+# Pairs with Server
+sock = bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+sock.connect((bd_addr , port))
+
+# Starts a count
+i =0
+
+# Makes sure the code runs
+while True:
+    # Runs the code 60 times
+    while (i < 60):
+        # It reads IMU Value if it can read
+        if imu.IMURead():
+            # Gets data from gyro
+            data = imu.getIMUData()
+            fusionPose = data["gyro"]
+            # Increases the time as it reads
+            i = i + 1
+            # Gets the reading and converts it into degrees
+            data= math.degrees(fusionPose[2])
+            # Converts data into string and sends
+            data_old=str(data)
+            data_new = data_old[0:6]
+            # Sends the value to the Server and sleeps the same time to synchronize
+            sock.send(data_new)
+            time.sleep(3.5)
+        # Stops sending value after 59 values
+        if i == 59 :
+            sock.close()
+
