@@ -1,0 +1,110 @@
+# Tahsin Can Sarlak and Yiyue Yin
+# Tufts University Advanced Robotics(ME-180) 
+# Chariot that does not use any wheels to move
+# Due: 10/16/2019
+
+# Server Raspberry Pi Code
+
+from math import *
+import time
+from adafruit_servokit import ServoKit
+import bluetooth
+kit = ServoKit(channels=16)
+server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM)
+
+#Setup the bluetooth service and connect with the gyroscope pi
+port = 1
+server_sock.bind(("",port))
+server_sock.listen(1)
+client_sock,address = server_sock.accept()
+
+#Confirm the connection is established
+print("Accepted connection from", address)
+
+#Use a while true loop to keep receiving gyroscope reading until the client stops sending data
+
+while True:
+    data = client_sock.recv(4096)
+    #This line of code is to check the data i get is the same as the original gyroscope read out
+    print (" received [%s]" % data.decode())
+    #Convert the data received from string to a float value
+    data = str(data)
+    data = data[2:8]
+    print(type(data))
+    data = float(data)
+    
+#Get data from gyroscpe and generate the out put as an angle and store it in value "data"
+#set function for chariot to go straight forward
+
+    if data > -5 and data < 5 :
+        #Move the weights on the  belt backwards
+        kit.continuous_servo[9].throttle=1
+        kit.continuous_servo[5].throttle=-0.3
+        time.sleep(1.6)
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=-0.3
+        time.sleep(0.1)
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=0
+        time.sleep(0.5)
+        
+        #Move the weights on the belts forwards
+        kit.continuous_servo[9].throttle=-1
+        kit.continuous_servo[5].throttle=0.3
+        time.sleep(1.6)
+        kit.continuous_servo[9].throttle=-1
+        kit.continuous_servo[5].throttle=0.3
+        time.sleep(0.1)
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=0
+        time.sleep(0.5)
+            
+        
+#set function for chariot to go right
+    elif data > 5:
+        
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=-0.3
+        time.sleep(1.8)
+        kit.continuous_servo[9].throttle=1
+        kit.continuous_servo[5].throttle=0
+        time.sleep(0.5)
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=0
+        time.sleep(2)
+
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=0.3
+        time.sleep(1.8)
+        kit.continuous_servo[9].throttle=-1
+        kit.continuous_servo[5].throttle=0
+        time.sleep(0.5)
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=0
+        time.sleep(0.5)
+        
+#set function for chariot to go left
+    elif data < -5:
+        
+        kit.continuous_servo[9].throttle=1
+        kit.continuous_servo[5].throttle=0
+        time.sleep(1.8)
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=-0.3
+        time.sleep(0.5)
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=0
+        time.sleep(2)
+
+        kit.continuous_servo[9].throttle=-1
+        kit.continuous_servo[5].throttle=0
+        time.sleep(1.8)
+        kit.continuous_servo[9].throttle=-1
+        kit.continuous_servo[5].throttle=0
+        time.sleep(0.1)
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=0.3
+        time.sleep(0.5)
+        kit.continuous_servo[9].throttle=0
+        kit.continuous_servo[5].throttle=0
+        time.sleep(0.5)
